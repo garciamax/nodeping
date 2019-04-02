@@ -52,24 +52,20 @@
         process.kill();
     }
     let currentProcess = null;
-    const data = [];
     const start = () => {
         if (currentProcess) return;
         currentProcess = run(time => {
-            let display = data;
-            if (data.length > 10) {
-                display = data.slice(-10);
-                const sum = display.reduce((a, b) => a + b);
-                const avg = sum / display.length;
-                const avgDisplay = avg.toFixed(2);
-                document.title = avgDisplay;
-                ipcRenderer.send('time', avgDisplay);
-            }
-            const _time = parseFloat(time);
-            display.push(_time);
-            chart.series[0].update({
-                data: display
-            }, true);
+            const series = chart.series[0];
+            const {data} = series;
+            const shift = series.data.length > 20;
+            const point = parseFloat(time) || 0;
+            series.addPoint(point, true, shift);
+            const dataValues = data.map(x=>x.y);
+            const sum = dataValues.reduce((a, b) => a + b,0);
+            const avg = sum / data.length;
+            const avgDisplay = avg.toFixed(2);
+            document.title = avgDisplay;
+            ipcRenderer.send('time', avgDisplay);
         });
     };
     document.querySelector("#run").addEventListener("click", start);
@@ -82,7 +78,7 @@
             enabled: false
         },
         chart: {
-            type: 'column',
+            type: 'area',
         },
         title: {
             text: '',
@@ -107,15 +103,33 @@
             }
         },
         tooltip:{
+            // enabled: false,
             headerFormat: "",
             pointFormat: "{point.y}"
         },
         plotOptions: {
-            line: {
-                dataLabels: {
-                    enabled: true
+            area:{
+                step: "right",
+                marker: {
+                    enabled: false
                 },
-                enableMouseTracking: false
+                states: {
+                    hover: {
+                        enabled: false
+                    }
+                },
+                fillColor: {
+                    linearGradient: {
+                        x1: 0,
+                        y1: 0,
+                        x2: 0,
+                        y2: 1
+                    },
+                    stops: [
+                        [0, Highcharts.getOptions().colors[0]],
+                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                    ]
+                },
             }
         },
         series: [{

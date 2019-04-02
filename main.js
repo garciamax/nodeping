@@ -1,10 +1,14 @@
 const {app, BrowserWindow, Tray, nativeImage, ipcMain} = require('electron');
 const path = require('path');
 const c = require('ansi-colors');
-
-require('electron-reload')(__dirname,{
-    electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
-});
+const isDev = () => {
+    return process.env.ELECTRON_ENV !== 'production';
+};
+if(isDev()){
+    require('electron-reload')(__dirname,{
+        electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
+    });
+}
 
 const createWindow = () => {
     let mainWindow = new BrowserWindow({width: 800, height: 600});
